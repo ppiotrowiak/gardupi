@@ -14,9 +14,12 @@ console.log("Starting gardupi");
 var ledPinL = 13;
 var moistureValue;
 var ledOn = true;
-var moistSensorPower = 2;
-var moistSensorOn = false;
-var pumpMotor = 3;
+var moistSensorPin = 0;
+var moistSensorPower = 5;
+var moistSensorOn = true;
+var pumpMotor = 2;
+// delay between beginning of readings in milliseconds
+var intervalDelay = 10000;
 // Connecting to the Arduino
 var firmata =  require('/opt/node/lib/node_modules/firmata');
 var board = new firmata.Board('/dev/ttyUSB0',function(err){
@@ -25,7 +28,7 @@ var board = new firmata.Board('/dev/ttyUSB0',function(err){
 		console.log(err);
 		return;
 	}
-	console.log("connected");
+	console.log("Arduino board connected!");
 
 	console.log("Firmware: " + board.firmware.name + "-" + board.firmware.version.major + "." + board.firmware.version.minor);
 
@@ -37,11 +40,18 @@ var board = new firmata.Board('/dev/ttyUSB0',function(err){
 	board.pinMode(12, board.MODES.OUTPUT);
 	board.pinMode(pumpMotor, board.MODES.OUTPUT);
 	board.pinMode(moistSensorPower, board.MODES.OUTPUT);
+
+	// Setting up relay pins off(HIGH)
+	board.digitalWrite(3, board.HIGH);
+	board.digitalWrite(4, board.HIGH);
+	board.digitalWrite(moistSensorPower, board.HIGH);
+	board.digitalWrite(pumpMotor, board.HIGH);
+
 	/*
 	*	Analog read
 	*/
 	// Moisture
-	board.analogRead(0, function(val){
+	board.analogRead(moistSensorPin, function(val){
 		moistureValue = val;
 	});
 
@@ -60,8 +70,8 @@ var board = new firmata.Board('/dev/ttyUSB0',function(err){
 	ledOn = !ledOn;
 	// Reading moisture value
 	// At the beginning of iteration Turn on sensors
-	board.digitalWrite(moistSensorPower, board.HIGH);
-	// Pump relay HIGH == OFF, LOW==ON
+	board.digitalWrite(moistSensorPower, board.LOW);
+	// Pump relay HIGH == , LOW==
 	board.digitalWrite(pumpMotor, board.HIGH);
 	// After a period of time take reading and turn off sensors
 	setTimeout(function() {
@@ -78,23 +88,29 @@ var board = new firmata.Board('/dev/ttyUSB0',function(err){
 			board.digitalWrite(12, board.LOW);
 		}
 	
-		board.digitalWrite(moistSensorPower, board.LOW);
+		
 		console.log("Moisture value(2): " + moistureValue);
 		
 		// Watering now
 		if (moistureValue > 600)
 		{
 			board.digitalWrite(pumpMotor, board.LOW);
+			setTimeout(function() {
+			
+				board.digitalWrite(pumpMotor, board.HIGH);
+			}, 1000);
 		}
 		else
 		{
 			board.digitalWrite(pumpMotor, board.HIGH);
 		}
-	}, 2000);
-	
 		
+		// turn off moisture sensor
+		board.digitalWrite(moistSensorPower, board.HIGH);
+	}, 1000);
+	
 
-	}, 5000);
+	}, intervalDelay);
 	     
 });
 

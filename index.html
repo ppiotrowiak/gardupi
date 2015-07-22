@@ -1,0 +1,47 @@
+<html>
+    <head>
+        <title>Gardupi</title>
+    </head>
+    <body>
+        <div>
+            <p>
+                <button id="switchButton">turn on</button>
+            </p>
+        </div>    
+        <div>
+            <ul id="messages">
+            </ul>
+        </div>
+        <script src="socket.io/socket.io.js"></script>
+        <script src="http://code.jquery.com/jquery-1.8.0.min.js"></script>
+ 
+        <script>
+            $(function(){
+                var socket = io.connect('http://192.168.1.16:8080');
+ 
+                socket.on('connect', function() {
+                    $('#messages').append('<li>Connected to the Gardupi server.</li>');            
+                });
+ 
+                socket.on('message', function(message) {    
+                    $('#messages').append('<li>' + message + '</li>');
+                });
+ 
+                socket.on('disconnect', function() {
+                    $('#messages').append('<li>Disconnected from the Gardupi server.</li>');            
+                });
+ 
+                $('#switchButton').bind('click', function() {
+                    var message = $('#switchButton').text();
+                    socket.send(message);
+                    $('#messages').append('<li>me: ' + message + '</li>');
+ 
+                    if (message == 'turn on')
+                        $('#switchButton').text('turn off');
+                    else 
+                        $('#switchButton').text('turn on');
+                });    
+            });
+        </script>
+    </body>
+</html>

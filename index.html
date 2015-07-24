@@ -3,9 +3,13 @@
         <title>Gardupi</title>
     </head>
     <body>
+	<div>
+		<h1>GarduPi</h1>
+		<h3>Author: Przemyslaw Piotrowiak</h3>
+	</div>
         <div>
             <p>
-                <button id="switchButton">turn on</button>
+                <button id="moistureButton">Get moisture</button>
             </p>
         </div>    
         <div>
@@ -31,15 +35,11 @@
                     $('#messages').append('<li>Disconnected from the Gardupi server.</li>');            
                 });
  
-                $('#switchButton').bind('click', function() {
-                    var message = $('#switchButton').text();
+                $('#moistureButton').bind('click', function() {
+                    var message = $('#moistureButton').text();
                     socket.send(message);
                     $('#messages').append('<li>me: ' + message + '</li>');
  
-                    if (message == 'turn on')
-                        $('#switchButton').text('turn off');
-                    else 
-                        $('#switchButton').text('turn on');
                 });    
             });
         </script>

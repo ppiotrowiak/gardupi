@@ -9,6 +9,7 @@
  *
  */
 
+
 console.log("Starting gardupi");
 
 /*  
@@ -43,7 +44,11 @@ var moistureThreshold = 600;
 // delay between beginning of readings in milliseconds
 var intervalDelay = 10000;
 
+// for the http listener
 var ipAddress = "192.168.1.16";
+
+// current time
+var moment = require('moment');
 
 // Setting up webserver
 var app = require('http').createServer(handler),
@@ -80,7 +85,9 @@ function arduinoReady(err) {
     console.log('Firmware: ' + board.firmware.name 
       + '-' + board.firmware.version.major 
       + '.' + board.firmware.version.minor);
-	/*
+	
+      
+        /*
 	*	Setting up pins
 	*/
 		
@@ -125,7 +132,7 @@ function watering() {
 	// main function checking the state of soil and water level periodically   
 	setInterval(function() {
 	
-
+	
 
 	// Reading soil moisture and water level value
 	// At the beginning of iteration Turn on sensors - LOW means on
@@ -136,9 +143,13 @@ function watering() {
 	board.digitalWrite(pumpMotor, board.HIGH);
 	// After a period of time take reading and turn off sensors
 	setTimeout(function() {
-
-		console.log("Moisture value: " + moistureValue);
-		console.log("Water level: " + waterLevel);
+		
+		// Display target moisture level and current levels
+		console.log("\nTarget moisture level: " + moistureThreshold);
+		console.log("Delay between readings: " + (intervalDelay / 1000) + " seconds");
+		console.log("Reading at: " + moment().format('YYYY-MM-DD HH:mm:ss'));
+		console.log("Moisture value: " + moistureValue + " (1023 - driest, 0 - wettest)");
+		console.log("Water level: " + waterLevel +  " ( ~0 - empty)");
 		lastMoisture = moistureValue;
 		// Run socket.io
 		sockets();

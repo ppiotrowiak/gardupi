@@ -11,16 +11,30 @@
 
 console.log("Starting gardupi");
 
-// Constants
+/*  
+ * Define variables and constants   
+ */
 var ledPinL = 13;
-// setting up default moisture so it is available for the http server
+// current moisture value
 var moistureValue;
+//  last moisture readings
+var lastMoisture = 1024;
+// current water level
+var waterLevel;
+// last water readings
+var lastWater = 0;
+
 var ledOn = true;
 // analog pin for moisture sensor
 var moistSensorPin = 0;
 // digital pin for moisture sensor power
 var moistSensorPower = 5;
 var moistSensorOn = true;
+
+// analog pin for water sensor
+var waterSensorPin = 7;
+// digital pin for water sensor power
+var waterSensorPower = 4;
 // pin for pump
 var pumpMotor = 2;
 // pump turn on for milliseconds
@@ -80,12 +94,10 @@ function arduinoReady(err) {
 	board.digitalWrite(4, board.HIGH);
 	board.digitalWrite(moistSensorPower, board.HIGH);
 	board.digitalWrite(pumpMotor, board.HIGH);
-    
+
 	// Run watering module
 	watering();
 }
-
-
 
 // LCD display
 var lcd = require('./ipAddress');
@@ -97,6 +109,7 @@ console.log("Listening on http:" + ipAddress + ":8080");
 
 
 function watering() {
+	
 	/*
 	*	Analog read
 	*/
@@ -104,22 +117,31 @@ function watering() {
 	board.analogRead(moistSensorPin, function(val){
 		moistureValue = val;
 	});
-
-	// main function checking the state of soil periodically   
+	
+	// Water level 
+	board.analogRead(waterSensorPin, function(val){
+		waterLevel = val;
+	});
+	// main function checking the state of soil and water level periodically   
 	setInterval(function() {
+	
 
 
-	// Reading moisture value
-	// At the beginning of iteration Turn on sensors
+	// Reading soil moisture and water level value
+	// At the beginning of iteration Turn on sensors - LOW means on
 	board.digitalWrite(moistSensorPower, board.LOW);
-	// Pump relay HIGH == , LOW==
+	board.digitalWrite(waterSensorPower, board.LOW);
+		
+	// Pump relay off (HIGH) == , LOW==
 	board.digitalWrite(pumpMotor, board.HIGH);
 	// After a period of time take reading and turn off sensors
 	setTimeout(function() {
 
 		console.log("Moisture value: " + moistureValue);
-
-	
+		console.log("Water level: " + waterLevel);
+		lastMoisture = moistureValue;
+		// Run socket.io
+		sockets();
 
 		
 		// Watering if dried that required value
@@ -138,10 +160,42 @@ function watering() {
 		
 		// turn off moisture sensor
 		board.digitalWrite(moistSensorPower, board.HIGH);
-	}, 1000);
+		// turn off water sensor
+		board.digitalWrite(waterSensorPower, board.HIGH);
+	}, 2000);
 	
 
 	}, intervalDelay);
 }	     
 
+// handling socket.io comm from index.html
+function sockets() {	 
+	io.sockets.on('connection', function(socket) {
+	    socket.send('connected...');
+	 
+	    socket.on('message', function(data) {
+		//~ if (data == 'turn on') {
+		    //~ console.log('+');
+		    //~ board.digitalWrite(ledPinL, board.HIGH);
+		    //~ socket.broadcast.send("let there be light!");
+		//~ }
+		//~ if (data == 'turn off') {
+		    //~ console.log('-');
+		    //~ board.digitalWrite(ledPinL, board.LOW);
+		    //~ socket.broadcast.send("who turned out the light?");
+		//~ }
+		 if (data == 'Get moisture') {
+			socket.send(lastMoisture);
+		 }		 
+		return;
+	    });
+	 
+	    socket.on('disconnect', function() {
+		socket.send('disconnected...');
+	    });
+	});
+}
 
+    		    
+
+    
